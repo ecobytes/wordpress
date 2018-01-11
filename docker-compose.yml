@@ -1,28 +1,32 @@
 version: '2'
 networks:
-  lb_web:
+  frontend-web:
     external: true
-  back:
+  backend:
     driver: bridge
 services:
-  db:
-    image: mysql
+  mariadb:
+    image: mariadb
     volumes:
-      - ./mysql/runtime:/var/lib/mysql
+      - ./mariadb:/var/lib/mysql
     env_file:
       - ./env
     networks:
-    - back
+    - backend
+    logging:
+      driver: none
   app:
     image: indiehosters/wordpress
     links:
-      - db:mysql
+      - mariadb:mysql
     volumes:
       - ./data:/var/www/html/wp-content
     env_file:
       - ./env
     networks:
-    - back
+    - backend
+    logging:
+      driver: none
   web:
     image: nginx
     volumes:
@@ -31,8 +35,10 @@ services:
       - app
     volumes_from:
       - app
-    environment:
-      - VIRTUAL_HOST
+    env_file:
+      - ./frontend.env
     networks:
-    - back
-    - lb_web
+    - backend
+    - frontend-web
+    logging:
+      driver: none
